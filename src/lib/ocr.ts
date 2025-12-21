@@ -1,9 +1,9 @@
 import Tesseract from 'tesseract.js';
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 
-// Configure PDF.js worker
-// In a real app, you might want to serve this locally
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker for version 3.x
+// Explicitly setting workerSrc to UNPKG with correct version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
 export async function extractTextFromImage(file: File): Promise<string> {
     try {
@@ -18,7 +18,11 @@ export async function extractTextFromImage(file: File): Promise<string> {
 export async function extractTextFromPdf(file: File): Promise<string> {
     try {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        // Use standard v3 loading
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+
         let fullText = '';
 
         for (let i = 1; i <= pdf.numPages; i++) {
@@ -33,7 +37,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
         return fullText;
     } catch (error) {
         console.error("Error parsing PDF:", error);
-        throw new Error("Failed to extract text from PDF");
+        throw new Error("Failed to extract text from PDF: " + (error instanceof Error ? error.message : String(error)));
     }
 }
 

@@ -1,18 +1,12 @@
 
 import { createOpenAI } from '@ai-sdk/openai';
-import { generateObject } from 'ai';
-import { z } from 'zod';
+import { generateText } from 'ai';
 
 export const maxDuration = 60;
 
 const groq = createOpenAI({
     baseURL: 'https://api.groq.com/openai/v1',
     apiKey: process.env.GROQ_API_KEY,
-});
-
-const refineSchema = z.object({
-    front: z.string().describe('The updated front of the card'),
-    back: z.string().describe('The updated back of the card'),
 });
 
 export async function POST(req: Request) {
@@ -23,11 +17,9 @@ export async function POST(req: Request) {
             return new Response('Missing card or instruction', { status: 400 });
         }
 
-        const result = await generateObject({
-            model: groq('llama-3.3-70b-versatile'),
-            schema: refineSchema,
-            prompt: `
+        const prompt = `
         You are an expert study assistant.
+        
         Current Flashcard:
         Front: "${card.front}"
         Back: "${card.back}"
@@ -35,13 +27,28 @@ export async function POST(req: Request) {
         Instruction: "${instruction}"
 
         Update the flashcard based on the instruction. Maintain the core meaning but adapt the content.
-        Return the new front and back.
-      `,
+        
+        Output valid JSON in the following format:
+        {
+          "front": "Updated Front",
+          "back": "Updated Back"
+        }
+        
+        Do not include markdown blocks. Return raw JSON only.
+        `;
+
+        const result = await generateText({
+            model: groq('llama-3.3-70b-versatile'),
+            prompt: prompt,
         });
 
-        return Response.json(result.object);
+        // Clean up markdown if model adds it
+        let cleanText = result.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(cleanText);
+
+        return Response.json(data);
     } catch (error) {
         console.error('Refine error:', error);
-        return new Response('Failed to refine card', { status: 500 });
+        return new Response(JSON.stringify({ error: 'Failed to refine card' }), { status: 500 });
     }
 }

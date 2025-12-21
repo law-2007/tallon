@@ -21,6 +21,16 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
+    const clearInputs = () => {
+        setEmail("")
+        setPassword("")
+    }
+
+    const handleTabChange = () => {
+        setPassword("")
+        // Keep email as user might want to switch mode
+    }
+
     const handleAuth = async (action: 'login' | 'signup') => {
         setLoading(true)
         try {
@@ -42,13 +52,23 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
             if (error) throw error
 
-            if (action === 'signup' && !data.session) {
-                toast.success("Account created! Please log in.")
-                // Optionally auto-login or switch tab
+            if (action === 'signup') {
+                if (data.session) {
+                    toast.success("Account created! You are logged in.")
+                    onSuccess(data.user)
+                    onClose()
+                } else {
+                    // Supabase default: Email needs confirmation
+                    toast.info("Account created! Check your email to confirm.", {
+                        description: "If you don't receive it, ask admin to disable email confirmation."
+                    })
+                    clearInputs()
+                }
             } else if (data.user) {
-                toast.success(action === 'login' ? "Welcome back!" : "Welcome!")
+                toast.success("Welcome back!")
                 onSuccess(data.user)
                 onClose()
+                clearInputs()
             }
         } catch (error: any) {
             toast.error(error.message || "Authentication failed")
@@ -66,7 +86,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         Sign in to save your decks and access them anywhere.
                     </DialogDescription>
                 </DialogHeader>
-                <Tabs defaultValue="login" className="w-full">
+                <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="login">Login</TabsTrigger>
                         <TabsTrigger value="signup">Sign Up</TabsTrigger>
