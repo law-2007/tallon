@@ -27,14 +27,26 @@ interface FlashcardPreviewProps {
     initialCards: Flashcard[]
     onExport: (cards: Flashcard[]) => void
     initialMode?: 'edit' | 'study'
+    onCardsChange: (cards: Flashcard[]) => void
 }
 
-export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit' }: FlashcardPreviewProps) {
+export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit', onCardsChange }: FlashcardPreviewProps) {
     const [cards, setCards] = useState<Flashcard[]>(initialCards)
     const [loadingId, setLoadingId] = useState<string | null>(null)
     const [mode, setMode] = useState<'edit' | 'study'>(initialMode)
 
-    // Study Mode State
+    // Sync from parent (e.g. when loading a deck)
+    useEffect(() => {
+        setCards(initialCards)
+    }, [initialCards])
+
+    // Wrapper to update both local and parent state
+    const updateCards = (newCards: Flashcard[]) => {
+        setCards(newCards)
+        onCardsChange(newCards)
+    }
+
+    // ... Study Mode State ...
     const [studyQueue, setStudyQueue] = useState<Flashcard[]>([])
     const [isFlipped, setIsFlipped] = useState(false)
     const [sessionStart, setSessionStart] = useState<number>(Date.now())
@@ -65,9 +77,10 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit' 
     }
 
     const handleUpdate = (id: string, field: 'front' | 'back', value: string) => {
-        setCards(cards.map(card =>
+        const newCards = cards.map(card =>
             card.id === id ? { ...card, [field]: value } : card
-        ))
+        )
+        updateCards(newCards)
     }
 
     const handleSmartRefine = async (id: string, instruction: string) => {
@@ -81,7 +94,8 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit' 
             })
             if (!res.ok) throw new Error("Refinement failed")
             const refined = await res.json()
-            setCards(cards.map(c => c.id === id ? { ...c, ...refined } : c))
+            const newCards = cards.map(c => c.id === id ? { ...c, ...refined } : c)
+            updateCards(newCards)
         } catch (e) {
             console.error(e)
         } finally {
@@ -90,16 +104,16 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit' 
     }
 
     const handleRating = (rating: 'again' | 'hard' | 'good' | 'easy') => {
+        // ... (Study logic affects queue, not card content usually, but if it did it would use updateCards)
+        // For now study queue rating doesn't change card content, just queue flow.
         const currentCard = studyQueue[0]
         const remaining = studyQueue.slice(1)
 
         setIsFlipped(false)
 
         if (rating === 'again' || rating === 'hard') {
-            // Re-queue card
             setStudyQueue([...remaining, currentCard])
         } else {
-            // Mark complete
             setCompletedCount(prev => prev + 1)
             if (remaining.length === 0) {
                 setShowCompletion(true)
@@ -115,7 +129,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit' 
             front: "",
             back: ""
         }
-        setCards([...cards, newCard])
+        updateCards([...cards, newCard])
     }
 
     const formatTime = (ms: number) => {

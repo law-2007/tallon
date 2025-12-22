@@ -343,6 +343,7 @@ function HomeContent() {
               initialCards={cards}
               onExport={handleExport}
               initialMode={initialMode}
+              onCardsChange={setCards}
             />
           </div>
         )}
