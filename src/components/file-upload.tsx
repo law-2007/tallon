@@ -28,7 +28,9 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp']
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
     },
     maxFiles: 1,
     disabled: isUploading
@@ -51,7 +53,7 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
       >
         <CardContent className="flex flex-col items-center justify-center p-12 text-center h-64">
           <input {...getInputProps()} />
-          
+
           {selectedFile ? (
             <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
               <div className="relative mb-4">
@@ -93,17 +95,17 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
                   {isDragActive ? "Drop it here!" : "Upload your materials"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Drag & drop PDFs or images, or click to browse
+                  Drag & drop PDFs, Images, DOCX, or TXT
                 </p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
-      
+
       {!selectedFile && (
         <p className="text-center text-xs text-muted-foreground mt-4">
-          Supported formats: PDF, PNG, JPG (Max 50MB)
+          Supported formats: PDF, PNG, JPG, DOCX, TXT (Max 50MB)
         </p>
       )}
     </div>
