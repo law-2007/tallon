@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Wand2, Download, RefreshCw, Layers, Edit3, PlusCircle, Sparkles } from "lucide-react"
+import { Wand2, Download, RefreshCw, Layers, Edit3, PlusCircle, Sparkles, Trash2 } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -70,10 +71,17 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
     }
 
     const handleModeChange = (newMode: 'edit' | 'study') => {
-        setMode(newMode)
         if (newMode === 'study') {
+            // Validate cards before studying
+            for (let i = 0; i < cards.length; i++) {
+                if (!cards[i].front.trim() || !cards[i].back.trim()) {
+                    toast.error(`Card ${i + 1} is incomplete.Please fill both sides before studying.`)
+                    return
+                }
+            }
             startStudySession()
         }
+        setMode(newMode)
     }
 
     const handleUpdate = (id: string, field: 'front' | 'back', value: string) => {
@@ -123,6 +131,16 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
         }
     }
 
+    const handleSkip = (e: React.MouseEvent) => {
+        e.stopPropagation() // Prevent flip
+        const currentCard = studyQueue[0]
+        const remaining = studyQueue.slice(1)
+        // Move current card to the end of the queue
+        setStudyQueue([...remaining, currentCard])
+        setIsFlipped(false)
+        toast.info("Card skipped. It will appear again later.", { duration: 1500 })
+    }
+
     const handleAddCard = () => {
         const newCard: Flashcard = {
             id: crypto.randomUUID(),
@@ -135,7 +153,16 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
     const formatTime = (ms: number) => {
         const seconds = Math.floor(ms / 1000)
         const minutes = Math.floor(seconds / 60)
-        return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`
+        return minutes > 0 ? `${minutes}m ${seconds % 60} s` : `${seconds} s`
+    }
+
+    const handleDeleteCard = (id: string, index: number) => {
+        // Confirmation could be optional for single cards, but better safe.
+        // For speed, let's just delete or use a small toast undo? 
+        // User asked for "delete a card from the deck".
+        const newCards = cards.filter(c => c.id !== id)
+        updateCards(newCards)
+        toast.success("Card deleted")
     }
 
     return (
@@ -196,16 +223,27 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                         className="space-y-6"
                     >
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {cards.map((card, index) => (
-                                <EditableCard
-                                    key={card.id}
-                                    card={card}
-                                    index={index}
-                                    loadingId={loadingId}
-                                    onUpdate={handleUpdate}
-                                    onRefine={handleSmartRefine}
-                                />
-                            ))}
+                            <AnimatePresence>
+                                {cards.map((card, index) => (
+                                    <motion.div
+                                        key={card.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    >
+                                        <EditableCard
+                                            card={card}
+                                            index={index}
+                                            loadingId={loadingId}
+                                            onUpdate={handleUpdate}
+                                            onRefine={handleSmartRefine}
+                                            onDelete={() => handleDeleteCard(card.id, index)}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         </div>
                         <Button
                             onClick={handleAddCard}
@@ -254,10 +292,11 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                                     {!isFlipped ? (
                                         <Button
                                             size="lg"
-                                            className="w-full max-w-xs text-lg shadow-md transition-all hover:scale-105 active:scale-95"
-                                            onClick={() => setIsFlipped(true)}
+                                            variant="secondary"
+                                            className="w-full max-w-xs text-lg shadow-sm transition-all hover:bg-secondary/80"
+                                            onClick={handleSkip}
                                         >
-                                            Show Answer
+                                            Skip Card
                                         </Button>
                                     ) : (
                                         <div className="grid grid-cols-4 gap-2 w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -356,24 +395,34 @@ function CompletionView({ timeSpent, cardsReviewed, onRestart }: { timeSpent: st
     )
 }
 
-function EditableCard({ card, index, loadingId, onUpdate, onRefine }: any) {
+function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: any) {
     return (
         <Card className="group relative transition-all hover:shadow-lg border-muted/60 bg-gradient-to-br from-card to-card/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
                     Card {index + 1}
                 </CardTitle>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {loadingId === card.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onRefine(card.id, "Make it simpler")}>Make Simpler</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRefine(card.id, "Add a mnemonic")}>Add Mnemonic</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                {loadingId === card.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onRefine(card.id, "Make it simpler")}>Make Simpler</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onRefine(card.id, "Add a mnemonic")}>Add Mnemonic</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                        onClick={onDelete}
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-1.5">
@@ -406,9 +455,9 @@ function StickyNote({ card, isFlipped, onFlip }: { card: Flashcard, isFlipped: b
             onClick={onFlip}
         >
             <motion.div
-                className="relative w-full h-full transition-all duration-500 transform-style-3d shadow-xl"
+                className="relative w-full h-full transition-all duration-300 transform-style-3d shadow-xl"
                 animate={{ rotateY: isFlipped ? 180 : 0 }}
-                transition={{ duration: 0.4, type: "spring", stiffness: 260, damping: 20 }}
+                transition={{ duration: 0.15, type: "spring", stiffness: 260, damping: 20 }}
                 style={{ transformStyle: 'preserve-3d' }}
             >
                 {/* Front (Question) */}

@@ -3,7 +3,21 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { PlusCircle, BookOpen, Loader2, Trash2 } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { PlusCircle, BookOpen, Loader2, Trash2, Info, Calendar } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
@@ -20,6 +34,7 @@ interface Deck {
 export default function LibraryPage() {
     const [decks, setDecks] = useState<Deck[]>([])
     const [loading, setLoading] = useState(true)
+    const [deckToDelete, setDeckToDelete] = useState<string | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -60,17 +75,25 @@ export default function LibraryPage() {
         }
     }
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
-        e.stopPropagation() // Prevent card click
-        if (!confirm("Delete this deck?")) return
+    const confirmDelete = async () => {
+        if (!deckToDelete) return
 
         try {
-            const { error } = await supabase.from('decks').delete().eq('id', id)
+            const { data, error } = await supabase.from('decks').delete().eq('id', deckToDelete).select()
+
             if (error) throw error
-            setDecks(prev => prev.filter(d => d.id !== id))
+
+            if (!data || data.length === 0) {
+                throw new Error("Could not delete deck. Check 'DELETE' RLS policy.")
+            }
+
+            setDecks(prev => prev.filter(d => d.id !== deckToDelete))
             toast.success("Deck deleted")
-        } catch (error) {
-            toast.error("Delete failed")
+        } catch (error: any) {
+            console.error("Delete error:", error)
+            toast.error("Delete failed: " + (error.message || "Unknown error"))
+        } finally {
+            setDeckToDelete(null)
         }
     }
 
@@ -107,31 +130,43 @@ export default function LibraryPage() {
                             key={deck.id}
                             className="hover:shadow-md transition-shadow group relative flex flex-col h-full"
                         >
-                            <CardHeader className="pb-2">
+                            <CardHeader className="pb-2 relative">
+                                <div className="absolute top-4 right-4 z-10">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                                                <Info className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem className="text-xs text-muted-foreground cursor-default focus:bg-transparent">
+                                                <Calendar className="mr-2 h-3 w-3" />
+                                                Created: {new Date(deck.created_at).toLocaleDateString()}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                                 <CardTitle className="flex items-center gap-2 pr-8 truncate">
                                     <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                                    <Link href={`/?deck=${deck.id}`} className="hover:underline truncate">
+                                    <Link href={`/?deck=${deck.id}`} className="hover:underline truncate text-lg">
                                         {deck.title}
                                     </Link>
                                 </CardTitle>
                                 <CardDescription>{deck.card_count || 0} cards</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex flex-col flex-1 justify-end">
-                                <div className="text-sm text-muted-foreground mb-4">
-                                    Created: {new Date(deck.created_at).toLocaleDateString()}
-                                </div>
+                            <CardContent className="flex flex-col flex-1 justify-end pt-4">
                                 <div className="flex gap-2">
                                     <Link
                                         href={`/?deck=${deck.id}`}
-                                        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "flex-1")}
+                                        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "flex-1 font-medium")}
                                     >
                                         Study
                                     </Link>
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="text-destructive hover:bg-destructive/10 shrink-0"
-                                        onClick={(e) => handleDelete(e, deck.id)}
+                                        className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                                        onClick={(e) => { e.stopPropagation(); setDeckToDelete(deck.id); }}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
@@ -141,6 +176,21 @@ export default function LibraryPage() {
                     ))}
                 </div>
             )}
+
+            <Dialog open={!!deckToDelete} onOpenChange={(open) => !open && setDeckToDelete(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Deck</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this deck? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeckToDelete(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -166,6 +166,14 @@ function HomeContent() {
       }
 
       let currentDeckId = searchParams.get('deck')
+
+      // Validate Cards
+      for (let i = 0; i < cards.length; i++) {
+        if (!cards[i].front.trim() || !cards[i].back.trim()) {
+          toast.error(`Card ${i + 1} is incomplete. Both sides must have text.`)
+          return
+        }
+      }
       let deck
 
       if (currentDeckId) {
