@@ -21,7 +21,6 @@ import { PlusCircle, BookOpen, Loader2, Trash2, Info, Calendar } from "lucide-re
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 interface Deck {
@@ -35,7 +34,6 @@ export default function LibraryPage() {
     const [decks, setDecks] = useState<Deck[]>([])
     const [loading, setLoading] = useState(true)
     const [deckToDelete, setDeckToDelete] = useState<string | null>(null)
-    const router = useRouter()
 
     useEffect(() => {
         fetchDecks()
@@ -46,8 +44,6 @@ export default function LibraryPage() {
             const { data: { user } } = await supabase.auth.getUser()
 
             if (!user) {
-                // If no user, we can't show library. Redirect or show empty?
-                // User asked: "why is there 3 decks... it should be empty"
                 setDecks([])
                 setLoading(false)
                 return
@@ -80,114 +76,122 @@ export default function LibraryPage() {
 
         try {
             const { data, error } = await supabase.from('decks').delete().eq('id', deckToDelete).select()
-
             if (error) throw error
-
-            if (!data || data.length === 0) {
-                throw new Error("Could not delete deck. Check 'DELETE' RLS policy.")
-            }
+            if (!data || data.length === 0) throw new Error("Delete failed")
 
             setDecks(prev => prev.filter(d => d.id !== deckToDelete))
             toast.success("Deck deleted")
         } catch (error: any) {
-            console.error("Delete error:", error)
-            toast.error("Delete failed: " + (error.message || "Unknown error"))
+            toast.error("Delete failed")
         } finally {
             setDeckToDelete(null)
         }
     }
 
     if (loading) {
-        return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>
+        return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>
     }
 
     return (
-        <div className="container py-8 mx-auto px-4 min-h-screen">
-            <div className="flex items-center justify-between mb-8">
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Library</h1>
-                    <p className="text-muted-foreground">Manage your flashcard decks.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Your Decks</h1>
+                    <p className="text-muted-foreground">Select a deck to start studying.</p>
                 </div>
-                <Link href="/">
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create New Deck
-                    </Button>
-                </Link>
             </div>
 
             {decks.length === 0 ? (
-                <div className="text-center py-20 border rounded-lg bg-muted/20">
+                <div className="text-center py-20 border rounded-2xl border-white/5 bg-white/5 border-dashed">
                     <h3 className="text-lg font-medium text-muted-foreground mb-4">No decks found</h3>
-                    <Link href="/">
-                        <Button variant="outline">Create your first deck</Button>
+                    <Link href="/generate">
+                        <Button>Create your first deck</Button>
                     </Link>
                 </div>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {decks.map((deck) => (
-                        <Card
-                            key={deck.id}
-                            className="hover:shadow-md transition-shadow group relative flex flex-col h-full"
-                        >
-                            <CardHeader className="pb-2 relative">
-                                <div className="absolute top-4 right-4 z-10">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
-                                                <Info className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem className="text-xs text-muted-foreground cursor-default focus:bg-transparent">
-                                                <Calendar className="mr-2 h-3 w-3" />
-                                                Created: {new Date(deck.created_at).toLocaleDateString()}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <CardTitle className="flex items-center gap-2 pr-8 truncate">
-                                    <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                                    <Link href={`/?deck=${deck.id}`} className="hover:underline truncate text-lg">
-                                        {deck.title}
-                                    </Link>
-                                </CardTitle>
-                                <CardDescription>{deck.card_count || 0} cards</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col flex-1 justify-end pt-4">
-                                <div className="flex gap-2">
-                                    <Link
-                                        href={`/?deck=${deck.id}`}
-                                        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "flex-1 font-medium")}
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 p-4">
+                    {decks.map((deck, i) => {
+                        // Deterministic pastel color logic to avoid adjacent repeats
+                        const colors = ['bg-[#fdf2b8]', 'bg-[#d3f4f6]', 'bg-[#e4dcf7]', 'bg-[#fad4e4]', 'bg-[#d7f9d8]', 'bg-[#fbe7c6]'];
+                        // Use index-based coloring modulo length to ensure sequence loop, minimizing neighbors having same color in standard grid flow
+                        const color = colors[i % colors.length];
+                        const rotate = (i % 2 === 0 ? 1 : -1) * (1 + (deck.id.charCodeAt(deck.id.length - 1) % 3)); // Slight random rotation
+
+                        return (
+                            <Link href={`/library/${deck.id}`} key={deck.id} className="block group">
+                                <div className="relative w-full aspect-video transition-transform hover:scale-105 duration-300 ease-out cursor-pointer">
+                                    {/* Stack effect layers */}
+                                    <div className={`absolute inset-0 ${color} rounded-sm shadow-sm translate-y-2 translate-x-2 rotate-2 opacity-60`} />
+                                    <div className={`absolute inset-0 ${color} rounded-sm shadow-sm translate-y-1 translate-x-1 rotate-1 opacity-80`} />
+
+                                    {/* Main Note */}
+                                    <div
+                                        className={`absolute inset-0 ${color} rounded-sm shadow-md p-6 flex flex-col justify-between transform transition-transform group-hover:-translate-y-1`}
+                                        style={{ transform: `rotate(${rotate}deg)` }}
                                     >
-                                        Study
-                                    </Link>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
-                                        onClick={(e) => { e.stopPropagation(); setDeckToDelete(deck.id); }}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                        {/* Paper Texture */}
+                                        <div className="absolute inset-0 opacity-[0.4] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none rounded-sm" />
+
+                                        {/* Paper Clip */}
+                                        {/* Randomize between silver, gold, black clips and position */}
+                                        {/* Paper Clip - Single Clean SVG */}
+                                        <div
+                                            className="absolute -top-5 w-8 h-12 z-20 drop-shadow-md opacity-90"
+                                            style={{
+                                                left: i % 3 === 0 ? "10%" : i % 3 === 1 ? "45%" : "20%",
+                                                transform: `rotate(${i % 2 === 0 ? -5 : 5}deg)`
+                                            }}
+                                        >
+                                            <svg viewBox="0 0 54 125" fill="none" className="w-full h-full text-zinc-400">
+                                                <path
+                                                    d="M20.5 7.5C20.5 3.63401 23.634 0.5 27.5 0.5C31.366 0.5 34.5 3.63401 34.5 7.5V107.5C34.5 116.889 26.8888 124.5 17.5 124.5C8.11116 124.5 0.5 116.889 0.5 107.5V37.5"
+                                                    stroke="currentColor"
+                                                    strokeWidth="8"
+                                                    strokeLinecap="round"
+                                                />
+                                                <path
+                                                    d="M53.5 17.5V107.5C53.5 116.889 45.8888 124.5 36.5 124.5"
+                                                    stroke="currentColor"
+                                                    strokeWidth="8"
+                                                    strokeLinecap="round"
+                                                />
+                                                {/* Simple clip U-shape */}
+                                            </svg>
+                                        </div>
+
+                                        <div className="relative z-10">
+                                            <h3 className="font-special-elite text-2xl text-zinc-900 leading-tight mb-2 line-clamp-2">
+                                                {deck.title}
+                                            </h3>
+                                            <p className="text-zinc-600 font-mono text-xs uppercase tracking-widest">
+                                                {deck.card_count || 0} Cards
+                                            </p>
+                                        </div>
+
+                                        <div className="relative z-10 flex justify-between items-end border-t border-zinc-900/10 pt-4 mt-2">
+                                            <span className="text-[10px] font-mono text-zinc-500 uppercase">
+                                                {new Date(deck.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                            </Link>
+                        )
+                    })}
                 </div>
             )}
 
             <Dialog open={!!deckToDelete} onOpenChange={(open) => !open && setDeckToDelete(null)}>
-                <DialogContent>
+                <DialogContent className="bg-zinc-900 border-white/10 text-zinc-100">
                     <DialogHeader>
                         <DialogTitle>Delete Deck</DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="text-zinc-400">
                             Are you sure you want to delete this deck? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeckToDelete(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                        <Button variant="outline" onClick={() => setDeckToDelete(null)} className="border-white/10 hover:bg-white/5 text-zinc-300">Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete} className="bg-red-500/20 text-red-300 hover:bg-red-500/30">Delete</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

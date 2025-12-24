@@ -39,7 +39,7 @@ export function UserNav() {
             {user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/10">
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
                                 <AvatarFallback className="bg-primary/10 text-primary">

@@ -168,7 +168,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
     return (
         <div className="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
             {/* Header Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card/50 p-4 rounded-xl border backdrop-blur-sm sticky top-4 z-10 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card p-4 rounded-xl border sticky top-4 z-10 shadow-sm">
                 <div className="flex items-center gap-2">
                     <div className="bg-primary/10 p-2 rounded-lg">
                         <Layers className="w-5 h-5 text-primary" />
@@ -303,7 +303,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                                             <div className="flex flex-col gap-1 items-center">
                                                 <Button
                                                     variant="secondary"
-                                                    className="w-full bg-red-100 hover:bg-red-200 text-red-700 border-red-200"
+                                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20"
                                                     onClick={() => handleRating('again')}
                                                 >
                                                     Again
@@ -312,7 +312,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                                             <div className="flex flex-col gap-1 items-center">
                                                 <Button
                                                     variant="secondary"
-                                                    className="w-full bg-amber-100 hover:bg-amber-200 text-amber-700 border-amber-200"
+                                                    className="w-full bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
                                                     onClick={() => handleRating('hard')}
                                                 >
                                                     Hard
@@ -321,7 +321,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                                             <div className="flex flex-col gap-1 items-center">
                                                 <Button
                                                     variant="secondary"
-                                                    className="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-200"
+                                                    className="w-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border-sky-500/20"
                                                     onClick={() => handleRating('good')}
                                                 >
                                                     Good
@@ -330,7 +330,7 @@ export function FlashcardPreview({ initialCards, onExport, initialMode = 'edit',
                                             <div className="flex flex-col gap-1 items-center">
                                                 <Button
                                                     variant="secondary"
-                                                    className="w-full bg-green-100 hover:bg-green-200 text-green-700 border-green-200"
+                                                    className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
                                                     onClick={() => handleRating('easy')}
                                                 >
                                                     Easy
@@ -397,7 +397,7 @@ function CompletionView({ timeSpent, cardsReviewed, onRestart }: { timeSpent: st
 
 function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: any) {
     return (
-        <Card className="group relative transition-all hover:shadow-lg border-muted/60 bg-gradient-to-br from-card to-card/50">
+        <Card className="group relative transition-all hover:scale-[1.02] hover:shadow-2xl border-[var(--palette-taupe)]/20 bg-white rounded-3xl overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
                     Card {index + 1}
@@ -405,11 +405,11 @@ function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: 
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/10 rounded-full">
                                 {loadingId === card.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-zinc-300">
                             <DropdownMenuItem onClick={() => onRefine(card.id, "Make it simpler")}>Make Simpler</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onRefine(card.id, "Add a mnemonic")}>Add Mnemonic</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -417,7 +417,7 @@ function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: 
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                        className="h-7 w-7 text-red-400 hover:bg-red-400/10 rounded-full"
                         onClick={onDelete}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -426,20 +426,20 @@ function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: 
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase text-primary/60">Question</label>
+                    <label className="text-[10px] font-semibold uppercase text-indigo-400/80">Question</label>
                     <Textarea
                         value={card.front}
                         onChange={(e) => onUpdate(card.id, 'front', e.target.value)}
-                        className="min-h-[80px] resize-none border-0 bg-secondary/30 focus-visible:ring-1 focus-visible:ring-primary/20 text-sm"
+                        className="min-h-[80px] resize-none border-white/5 bg-black/20 focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-sm rounded-xl"
                         placeholder="Front side..."
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase text-primary/60">Answer</label>
+                    <label className="text-[10px] font-semibold uppercase text-purple-400/80">Answer</label>
                     <Textarea
                         value={card.back}
                         onChange={(e) => onUpdate(card.id, 'back', e.target.value)}
-                        className="min-h-[100px] resize-none border-0 bg-secondary/30 focus-visible:ring-1 focus-visible:ring-primary/20 text-sm"
+                        className="min-h-[100px] resize-none border-white/5 bg-black/20 focus-visible:ring-1 focus-visible:ring-purple-500/50 text-sm rounded-xl"
                         placeholder="Back side..."
                     />
                 </div>
@@ -449,6 +449,10 @@ function EditableCard({ card, index, loadingId, onUpdate, onRefine, onDelete }: 
 }
 
 function StickyNote({ card, isFlipped, onFlip }: { card: Flashcard, isFlipped: boolean, onFlip: () => void }) {
+    // Deterministic color based on card ID
+    const colors = ['bg-[#fdf2b8]', 'bg-[#d3f4f6]', 'bg-[#e4dcf7]', 'bg-[#fad4e4]', 'bg-[#d7f9d8]', 'bg-[#fbe7c6]'];
+    const color = colors[card.id.charCodeAt(0) % colors.length];
+
     return (
         <div
             className="w-full h-full cursor-pointer perspective-1000 group relative"
@@ -461,38 +465,65 @@ function StickyNote({ card, isFlipped, onFlip }: { card: Flashcard, isFlipped: b
                 style={{ transformStyle: 'preserve-3d' }}
             >
                 {/* Front (Question) */}
-                <div className="absolute inset-0 w-full h-full backface-hidden">
-                    <div className="w-full h-full bg-[#fef9c3] p-8 flex flex-col items-center justify-center text-center shadow-lg transform rotate-[0.5deg]">
-                        {/* Tape effect */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-8 bg-white/30 backdrop-blur-sm rotate-[-1deg] shadow-sm z-10" />
+                <div
+                    className={`absolute inset-0 w-full h-full backface-hidden ${color} rounded-sm shadow-md overflow-hidden`}
+                    style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: "rotateY(0deg) translateZ(1px)" /* Force it slightly forward */
+                    }}
+                >
+                    <div className="w-full h-full p-8 flex flex-col items-center justify-center text-center relative">
+                        {/* Paper Texture Overlay */}
+                        <div className="absolute inset-0 opacity-[0.6] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
 
-                        <div className="font-serif text-2xl text-stone-800 leading-relaxed max-w-md overflow-y-auto max-h-full scrollbar-none">
+                        {/* Tape - Top Center */}
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/40 backdrop-blur-[1px] shadow-sm rotate-[-1deg] z-10" />
+
+                        {/* Front Indicator */}
+                        <div className="absolute top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full border border-black/10 text-[10px] uppercase tracking-widest text-black/40 font-bold z-10">
+                            Question
+                        </div>
+
+                        <div className="font-special-elite text-3xl md:text-4xl text-zinc-900 leading-relaxed max-w-lg overflow-y-auto max-h-[80%] scrollbar-hide z-10 font-bold">
                             <MathDisplay content={card.front} />
                         </div>
-                        <div className="absolute bottom-4 text-xs text-stone-400 font-mono tracking-widest uppercase">
-                            Click to reveal
+                        <div className="absolute bottom-4 text-xs text-zinc-500/60 font-mono tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            Click to flip
                         </div>
                     </div>
                 </div>
 
                 {/* Back (Answer) */}
                 <div
-                    className="absolute inset-0 w-full h-full backface-hidden"
-                    style={{ transform: "rotateY(180deg)" }}
+                    className={`absolute inset-0 w-full h-full backface-hidden ${color} rounded-sm shadow-md overflow-hidden`}
+                    style={{
+                        transform: "rotateY(180deg) translateZ(1px)", /* Match padding */
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden'
+                    }}
                 >
-                    <div className="w-full h-full bg-[#fef9c3] p-8 flex flex-col items-center justify-center text-center shadow-lg transform rotate-[-0.5deg]">
-                        {/* Tape effect */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-8 bg-white/30 backdrop-blur-sm rotate-[1deg] shadow-sm z-10" />
+                    <div className="w-full h-full p-8 flex flex-col items-center justify-center text-center relative">
+                        {/* Paper Texture Overlay */}
+                        <div className="absolute inset-0 opacity-[0.6] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
 
-                        <div className="font-serif text-2xl text-stone-800 leading-relaxed max-w-md overflow-y-auto max-h-full scrollbar-none">
+                        {/* Tape - Top Center */}
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/40 backdrop-blur-[1px] shadow-sm rotate-[1deg] z-10" />
+
+                        {/* Back Indicator */}
+                        <div className="absolute top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full border border-black/10 text-[10px] uppercase tracking-widest text-black/40 font-bold z-10">
+                            Answer
+                        </div>
+
+                        <div className="font-space-mono text-xl md:text-2xl text-zinc-900 leading-relaxed max-w-lg overflow-y-auto max-h-[80%] scrollbar-hide z-10 font-medium">
                             <MathDisplay content={card.back} />
                         </div>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Subtle shadow underneath */}
-            <div className="absolute inset-0 bg-black/5 blur-xl -z-10 translate-y-4" />
+            {/* Shadow underneath - Removed dark bloom */}
+            {/* <div className="absolute inset-0 bg-black/20 blur-xl -z-10 translate-y-4 rounded-full opacity-60" /> */}
         </div>
     )
 }

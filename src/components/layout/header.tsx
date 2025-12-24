@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 // import { Library, PlusCircle } from "lucide-react" // Unused
@@ -22,7 +23,13 @@ export function Header() {
             setUser(session?.user || null)
         })
 
-        return () => subscription.unsubscribe()
+        const handleAuthRequest = () => setShowAuth(true)
+        window.addEventListener("open-auth", handleAuthRequest)
+
+        return () => {
+            subscription.unsubscribe()
+            window.removeEventListener("open-auth", handleAuthRequest)
+        }
     }, [])
 
     const checkUser = async () => {
@@ -30,34 +37,64 @@ export function Header() {
         setUser(user)
     }
 
+
+    // ... imports
+
+    // ... imports
+
+    if (pathname?.startsWith("/library")) {
+        return null
+    }
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-14 items-center justify-between px-4">
+        <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[var(--header)] text-[var(--header-foreground)] backdrop-blur supports-[backdrop-filter]:bg-[var(--header)]/95 shadow-md">
+            <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <div className="flex items-center">
-                    <Link href="/" className="mr-6 flex items-center space-x-2">
-                        <span className="hidden font-bold sm:inline-block">
-                            Cramly
-                        </span>
+                    <Link href="/" className="mr-8 flex items-center hover:opacity-90 transition-opacity">
+                        <div className="relative h-14 w-auto flex items-center justify-center">
+                            <div className="relative w-48 h-full"> {/* Adjusted width for wordmark aspect ratio */}
+                                <Image
+                                    src="/logo-composite.png?v=2"
+                                    alt="Tallon Logo"
+                                    fill
+                                    className="object-contain object-left"
+                                    priority
+                                    unoptimized
+                                />
+                            </div>
+                        </div>
                     </Link>
                     <nav className="flex items-center space-x-6 text-sm font-medium">
-                        <Link
-                            href="/"
+                        <button
+                            onClick={() => {
+                                if (user) {
+                                    window.location.href = "/generate"
+                                } else {
+                                    window.dispatchEvent(new CustomEvent("open-auth"))
+                                }
+                            }}
                             className={cn(
-                                "transition-colors hover:text-foreground/80",
-                                pathname === "/" ? "text-foreground" : "text-foreground/60"
+                                "transition-all hover:text-primary bg-transparent border-0 p-0 text-sm font-medium",
+                                pathname === "/generate" ? "text-primary font-bold" : "text-muted-foreground"
                             )}
                         >
                             Generate
-                        </Link>
-                        <Link
-                            href="/library"
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (user) {
+                                    window.location.href = "/library"
+                                } else {
+                                    window.dispatchEvent(new CustomEvent("open-auth"))
+                                }
+                            }}
                             className={cn(
-                                "transition-colors hover:text-foreground/80",
-                                pathname === "/library" ? "text-foreground" : "text-foreground/60"
+                                "transition-all hover:text-primary bg-transparent border-0 p-0 text-sm font-medium",
+                                pathname === "/library" ? "text-primary font-bold" : "text-muted-foreground"
                             )}
                         >
                             Library
-                        </Link>
+                        </button>
                     </nav>
                 </div>
 
@@ -68,7 +105,11 @@ export function Header() {
                             <UserNav />
                         </div>
                     ) : (
-                        <Button onClick={() => setShowAuth(true)} size="sm">
+                        <Button
+                            onClick={() => setShowAuth(true)}
+                            size="sm"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
                             Sign In
                         </Button>
                     )}

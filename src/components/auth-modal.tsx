@@ -81,7 +81,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Welcome to Cramly</DialogTitle>
+                    <DialogTitle>Welcome to Tallon</DialogTitle>
                     <DialogDescription>
                         Sign in to save your decks and access them anywhere.
                     </DialogDescription>

@@ -144,6 +144,34 @@ export default function ProfilePage() {
         )
     }
 
+    const handleRemoveAvatar = async () => {
+        if (!user) return
+        setSaving(true)
+        try {
+            // We just clear the URL in the profile. We could also delete from storage if we track the path.
+            // For now, disassociating is enough.
+            const { error: authError } = await supabase.auth.updateUser({
+                data: { avatar_url: null }
+            })
+            if (authError) throw authError
+
+            const { error: dbError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: null, updated_at: new Date().toISOString() })
+                .eq('id', user.id)
+
+            if (dbError) throw dbError
+
+            setAvatarUrl(null)
+            toast.success("Avatar removed")
+            router.refresh()
+        } catch (error: any) {
+            toast.error("Error removing avatar: " + error.message)
+        } finally {
+            setSaving(false)
+        }
+    }
+
     return (
         <div className="container max-w-lg py-16 mx-auto px-4">
             <div className="space-y-8">
@@ -157,7 +185,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative group">
                             <Avatar className="h-24 w-24 border-2 border-muted">
-                                <AvatarImage src={avatarUrl || ""} className="object-cover" />
+                                {avatarUrl ? <AvatarImage src={avatarUrl} className="object-cover" /> : null}
                                 <AvatarFallback className="text-2xl bg-muted">
                                     {user?.email?.charAt(0).toUpperCase()}
                                 </AvatarFallback>
@@ -169,9 +197,16 @@ export default function ProfilePage() {
                                 <Camera className="text-white w-6 h-6" />
                             </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                            Change Photo
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                Change Photo
+                            </Button>
+                            {avatarUrl && (
+                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-500 hover:bg-red-500/10" onClick={handleRemoveAvatar}>
+                                    Remove
+                                </Button>
+                            )}
+                        </div>
                         <input
                             type="file"
                             ref={fileInputRef}
