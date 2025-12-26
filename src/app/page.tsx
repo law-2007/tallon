@@ -123,7 +123,7 @@ export default function LandingPage() {
       </section>
 
       {/* Redesigned Features SECTION - No More Grid */}
-      <section className="px-4 bg-[#eaddcf]/30 border-t border-[#857460]/10 h-screen snap-start flex items-center justify-center">
+      <section className="px-4 bg-[#eaddcf]/30 border-t border-[#857460]/10 min-h-screen py-20 snap-start flex items-center justify-center">
         <div className="max-w-4xl mx-auto space-y-24">
 
           <div className="text-center mb-16">
@@ -175,10 +175,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Simplified Footer Area */}
-      {/* Simplified Footer Area */}
-      {/* Simplified Footer Area */}
-      <footer className="py-20 text-center text-[#857460] text-sm font-medium border-t border-[#3b1e09]/10 snap-start bg-[#f8f6e9] h-screen flex flex-col items-center justify-end gap-6 pb-32">
+      <section className="py-10 snap-start text-center text-[#857460] text-sm font-medium border-t border-[#3b1e09]/10 bg-[#f8f6e9] flex flex-col items-center justify-center gap-6">
         <div className="space-y-4">
           <h3 className="text-4xl font-serif font-bold text-[#3b1e09]">Tallon</h3>
           <p className="opacity-60 max-w-md mx-auto leading-relaxed">
@@ -186,7 +183,10 @@ export default function LandingPage() {
             Built with focus in mind.
           </p>
         </div>
-        <p className="opacity-40 text-xs mt-8">&copy; {new Date().getFullYear()} Tallon. All rights reserved.</p>
+      </section>
+
+      <footer className="h-[30px] min-h-[30px] border-t border-[#3b1e09]/10 bg-[#f8f6e9] flex items-center justify-center">
+        <p className="opacity-40 text-xs text-[#857460]">&copy; {new Date().getFullYear()} Tallon. All rights reserved.</p>
       </footer>
 
     </div >
